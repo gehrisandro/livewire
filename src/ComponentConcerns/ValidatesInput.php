@@ -195,7 +195,9 @@ trait ValidatesInput
             throw $e;
         }
 
-        $this->resetErrorBag($ruleKeysForField);
+        if (!empty($ruleKeysForField)) {
+            $this->resetErrorBag($ruleKeysForField);
+        }
 
         return $result;
     }
