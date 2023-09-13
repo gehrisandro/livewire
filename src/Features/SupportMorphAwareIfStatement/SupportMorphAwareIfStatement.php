@@ -58,7 +58,7 @@ class SupportMorphAwareIfStatement extends ComponentHook
                     (?<![?=-])                    # Ignore "?>", "->", and "=>"
                     >                             # A ">" character
                 )
-            /mUx';
+            /mUxi';
 
             return $pattern;
         };
