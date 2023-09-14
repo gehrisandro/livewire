@@ -29,16 +29,9 @@ class SupportMorphAwareIfStatement extends ComponentHook
                     // by enforcing @empty has an opening parenthesis after it when matching...
                     ->map(fn ($directive) => str($directive)->startsWith('@empty') ? $directive.'[^\S\r\n]*\(' : $directive)
                     ->join('|')
-            .')';
+                .')';
 
-            $pattern = '/
-                '.$directivesPattern.'  # Blade directives: (@if|@foreach|...)
-                (?!                     # Not followed by:
-                    [^<]*               # ...
-                    (?<![?=-])          # ... (Make sure we don\'t confuse ?>, ->, and =>, with HTML opening tag closings)
-                    >                   # A ">" character that isn\'t preceded by a "<" character (meaning it\'s outside of a tag)
-                )
-            /mUxi';
+            $pattern = '/'.$directivesPattern.'/mUx';
 
             return $pattern;
         };
@@ -68,16 +61,18 @@ class SupportMorphAwareIfStatement extends ComponentHook
             $openings = array_keys($directives);
             $closings = array_values($directives);
 
-            $entire = preg_replace_callback($generatePattern($openings), function ($matches) {
+            $matchCount = 0;
+
+            $entire = preg_replace_callback($generatePattern($openings), function ($matches) use (&$matchCount) {
                 $original = $matches[0];
 
-                return '<!-- __BLOCK__ -->'.$original;
+                return ' __BLOCK__'.$matchCount++.'__ '.$original;
             }, $entire) ?? $entire;
 
-            $entire = preg_replace_callback($generatePattern($closings), function ($matches) {
+            $entire = preg_replace_callback($generatePattern($closings), function ($matches) use (&$matchCount) {
                 $original = $matches[0];
 
-                return $original.' <!-- __ENDBLOCK__ -->';
+                return $original.' __ENDBLOCK__'.$matchCount++.'__ ';
             }, $entire) ?? $entire;
 
             return $entire;

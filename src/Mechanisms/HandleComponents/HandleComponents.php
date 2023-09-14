@@ -259,8 +259,26 @@ class HandleComponents
 
             $html = $finish($html, $replaceHtml, $viewContext);
 
-            return $html;
+            return $this->stripMorphMarkers($html);
         });
+    }
+
+    protected function stripMorphMarkers(string $html): string
+    {
+        preg_match_all('/ __(?:END)?BLOCK__([0-9]+)__ /', strip_tags($html), $matches);
+        $usedIDs = $matches[1];
+
+        return preg_replace_callback('/ __(END)?BLOCK__([0-9]+)__ /', function ($matches) use ($usedIDs) {
+            if(!in_array($matches[2], $usedIDs)){
+                return '';
+            }
+
+            if($matches[1] === 'END'){
+                return '<!-- __ENDBLOCK__ -->';
+            }
+
+            return '<!-- __BLOCK__ -->';
+        }, $html);
     }
 
     protected function getView($component)
@@ -412,7 +430,7 @@ class HandleComponents
     protected function setComponentPropertyAwareOfTypes($component, $property, $value)
     {
         try {
-           $component->$property = $value;
+            $component->$property = $value;
         } catch (\TypeError $e) {
             // If an "int" is being set to empty string, unset the property (making it null).
             // This is common in the case of `wire:model`ing an int to a text field...
