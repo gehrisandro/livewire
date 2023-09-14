@@ -6566,6 +6566,7 @@ on("effects", (component, effects) => {
 function registerListeners(component, listeners2) {
   listeners2.forEach((name) => {
     let handler = (e) => {
+      console.log("this one");
       if (e.__livewire)
         e.__livewire.receivedBy.push(component);
       component.$wire.call("__dispatch", name, e.detail || {});
@@ -6573,7 +6574,9 @@ function registerListeners(component, listeners2) {
     window.addEventListener(name, handler);
     component.addCleanup(() => window.removeEventListener(name, handler));
     component.el.addEventListener(name, (e) => {
-      if (e.__livewire && e.bubbles)
+      if (!e.__livewire)
+        return;
+      if (e.bubbles)
         return;
       if (e.__livewire)
         e.__livewire.receivedBy.push(component.id);
@@ -7954,7 +7957,7 @@ document.addEventListener("alpine:navigating", () => {
 });
 
 // js/directives/shared.js
-function toggleBooleanStateDirective(el, directive2, isTruthy) {
+function toggleBooleanStateDirective(el, directive2, isTruthy, cachedDisplay = null) {
   isTruthy = directive2.modifiers.includes("remove") ? !isTruthy : isTruthy;
   if (directive2.modifiers.includes("class")) {
     let classes = directive2.expression.split(" ");
@@ -7970,7 +7973,7 @@ function toggleBooleanStateDirective(el, directive2, isTruthy) {
       el.removeAttribute(directive2.expression);
     }
   } else {
-    let cache = window.getComputedStyle(el, null).getPropertyValue("display");
+    let cache = cachedDisplay ?? window.getComputedStyle(el, null).getPropertyValue("display");
     let display = ["inline", "block", "table", "flex", "grid", "inline-flex"].filter((i) => directive2.modifiers.includes(i))[0] || "inline-block";
     display = directive2.modifiers.includes("remove") ? cache : display;
     el.style.display = isTruthy ? display : "none";
@@ -8207,8 +8210,9 @@ directive("dirty", ({ el, directive: directive2, component }) => {
   let targets = dirtyTargets(el);
   let dirty = Alpine.reactive({ state: false });
   let oldIsDirty = false;
+  let initialDisplay = el.style.display;
   let refreshDirtyState = (isDirty) => {
-    toggleBooleanStateDirective(el, directive2, isDirty);
+    toggleBooleanStateDirective(el, directive2, isDirty, initialDisplay);
     oldIsDirty = isDirty;
   };
   refreshDirtyStatesByComponent.add(component, refreshDirtyState);
