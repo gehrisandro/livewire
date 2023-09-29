@@ -5863,6 +5863,9 @@ function isSynthetic(subject) {
   return Array.isArray(subject) && subject.length === 2 && typeof subject[1] === "object" && Object.keys(subject[1]).includes("s");
 }
 function getCsrfToken() {
+  if (document.querySelector('meta[name="csrf-token"]')) {
+    return document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+  }
   if (document.querySelector("[data-csrf]")) {
     return document.querySelector("[data-csrf]").getAttribute("data-csrf");
   }
